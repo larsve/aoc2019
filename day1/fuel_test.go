@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
-	"runtime"
 	"testing"
+
+	"aoc2019/common"
 )
 
 func TestRequiredFuel(t *testing.T) {
@@ -27,9 +27,8 @@ func TestRequiredFuel(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(fmt.Sprintf("Mass %v", tc.mass), func(t *testing.T) {
 			rf := requiredFuel(tc.mass)
-			assert(t, rf == tc.fuel, "wrong fuel for mass %v, expected %v but got %v", tc.mass, tc.fuel, rf)
+			common.Assert(t, rf == tc.fuel, "wrong fuel for mass %v, expected %v but got %v", tc.mass, tc.fuel, rf)
 		})
-
 	}
 }
 
@@ -50,7 +49,7 @@ func TestTotalRequiredFuel(t *testing.T) {
 	for i, tc := range tt {
 		t.Run(fmt.Sprintf("totalRequiredFuel test #%v", i), func(t *testing.T) {
 			rf := totalRequiredFuel(tc.masses)
-			assert(t, rf == tc.fuel, "wrong fuel for test %v, expected %v but got %v", i, tc.fuel, rf)
+			common.Assert(t, rf == tc.fuel, "wrong fuel for test %v, expected %v but got %v", i, tc.fuel, rf)
 		})
 
 	}
@@ -75,7 +74,7 @@ func TestMassCompensatedFuel(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(fmt.Sprintf("massCompensatedFuel %v", tc.mass), func(t *testing.T) {
 			rf := massCompensatedFuel(requiredFuel(tc.mass))
-			assert(t, rf == tc.fuel, "wrong fuel for mass %v, expected %v but got %v", tc.mass, tc.fuel, rf)
+			common.Assert(t, rf == tc.fuel, "wrong fuel for mass %v, expected %v but got %v", tc.mass, tc.fuel, rf)
 		})
 
 	}
@@ -106,7 +105,7 @@ func TestTotalMassCompensatedRequiredFuel(t *testing.T) {
 	for i, tc := range tt {
 		t.Run(fmt.Sprintf("totalMassCompensatedFuel test #%v", i), func(t *testing.T) {
 			rf := totalMassCompensatedFuel(tc.masses)
-			assert(t, rf == tc.fuel, "wrong fuel for test %v, expected %v but got %v", i, tc.fuel, rf)
+			common.Assert(t, rf == tc.fuel, "wrong fuel for test %v, expected %v but got %v", i, tc.fuel, rf)
 		})
 
 	}
@@ -128,13 +127,5 @@ func BenchmarkFirstAnswer(b *testing.B) {
 func BenchmarkSecondAnswer(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		totalMassCompensatedFuel(shipModuleMasses)
-	}
-}
-
-func assert(tb testing.TB, condition bool, msg string, v ...interface{}) {
-	if !condition {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d: "+msg+"\033[39m\n\n", append([]interface{}{filepath.Base(file), line}, v...)...)
-		tb.FailNow()
 	}
 }
