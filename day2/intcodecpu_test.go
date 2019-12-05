@@ -50,7 +50,7 @@ func TestRun(t *testing.T) {
 	common.Assert(t, r == 2, "Run didn't give the expected result, expected 2 but got %v", r)
 
 	p = faultyProgram()
-	r,e = p.run()
+	_,e = p.run()
 	common.Assert(t, e != nil, "Run didn't end with an error")
 }
 

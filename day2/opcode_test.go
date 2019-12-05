@@ -31,11 +31,12 @@ func (m *testMemoryAccessor) sta(addr, value int) {
 	m.staValue = value
 }
 
-func testOp(t *testing.T, o opCode, p []int, eclda, ecsta bool, eaddr, eval int) {
+func testOp(t *testing.T, o opCode, p []int, elda, esta bool, eaddr, eval int) {
 	m := &testMemoryAccessor{}
-	o.execute(p, m)
-	common.Assert(t, m.calledLda == eclda, "%v LDA call, expected %v", o, eclda)
-	common.Assert(t, m.calledSta == ecsta, "%v STA call, expected %v", o, ecsta)
+	e := o.execute(p, m)
+	common.Assert(t, e == nil, "%v terminated with an error: %v", o, e)
+	common.Assert(t, m.calledLda == elda, "%v LDA call, expected %v", o, elda)
+	common.Assert(t, m.calledSta == esta, "%v STA call, expected %v", o, esta)
 	common.Assert(t, m.staAddr == eaddr, "%v STA addr, expected %v, but were %v", o, eaddr, m.staAddr)
 	common.Assert(t, m.staValue == eval, "%v STA value, expected %v, but were %v", o, eaddr, m.staValue)
 }
