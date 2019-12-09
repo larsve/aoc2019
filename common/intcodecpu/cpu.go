@@ -6,11 +6,11 @@ import (
 
 // CPU provieds the basic contents od the CPU/interpreter where a program is executed.
 type CPU struct {
-	program []int
-	memory  []int
-	pc      uint
-	stdIn   StdIn
-	stdOut  StdOut
+	program []int  // Original program
+	memory  []int  // Running program
+	pc      uint   // Program Counter
+	stdIn   StdIn  // Standard input function
+	stdOut  StdOut // Standard output function
 }
 
 func (c *CPU) lda(addr int) int {
@@ -21,7 +21,8 @@ func (c *CPU) sta(addr, value int) {
 	c.memory[addr] = value
 }
 
-func (c *CPU) reset() {
+// Reset will reset both program and pc to it's original states
+func (c *CPU) Reset() {
 	copy(c.memory, c.program)
 	c.pc = 0
 }
@@ -47,7 +48,7 @@ func (c *CPU) SetAlarmCode(code int) {
 // GetNounAndVerbFor return the "Noun" and "Verb" (Alarm code) for a specified program output
 func (c *CPU) GetNounAndVerbFor(output int) int {
 	for i := 0; i <= 9999; i++ {
-		c.reset()
+		c.Reset()
 		c.SetAlarmCode(i)
 		r, e := c.Run()
 		if e != nil {

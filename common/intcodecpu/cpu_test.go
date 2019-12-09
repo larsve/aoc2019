@@ -9,7 +9,7 @@ import (
 func TestReset(t *testing.T) {
 	p := faultyProgram()
 	p.memory[2] = 42
-	p.reset()
+	p.Reset()
 	common.Assert(t, p.memory[2] == 0, "Reset failed")
 }
 
@@ -45,7 +45,7 @@ func TestRunDay5Examples(t *testing.T) {
 func BenchmarkSmallAddProgram(b *testing.B) {
 	c := smallAddProgram()
 	for n := 0; n < b.N; n++ {
-		c.reset()
+		c.Reset()
 		_, e := c.Run()
 		common.Assert(b, e == nil, "Iteration %v ended with an error: %v", n, e)
 	}
@@ -54,7 +54,7 @@ func BenchmarkSmallAddProgram(b *testing.B) {
 func BenchmarkDay2Program(b *testing.B) {
 	c := day2Program()
 	for n := 0; n < b.N; n++ {
-		c.reset()
+		c.Reset()
 		_, e := c.Run()
 		common.Assert(b, e == nil, "Iteration %v ended with an error: %v", n, e)
 	}
@@ -111,13 +111,13 @@ func TestDay5Part2Example(t *testing.T) {
 	common.Assert(t, e == nil, "TestDay5Part1 falied with error: %v", e)
 	common.Assert(t, out == 1000, "TestDay5Part1 output error, got: %v", out)
 
-	c.reset()
+	c.Reset()
 	c.stdIn = func() int { return 0 }
 	_, e = c.Run()
 	common.Assert(t, e == nil, "TestDay5Part1 falied with error: %v", e)
 	common.Assert(t, out == 999, "TestDay5Part1 output error, got: %v", out)
 
-	c.reset()
+	c.Reset()
 	c.stdIn = func() int { return 9 }
 	_, e = c.Run()
 	common.Assert(t, e == nil, "TestDay5Part1 falied with error: %v", e)
@@ -141,7 +141,7 @@ func BenchmarkDay5Part2(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_, e := c.Run()
 		common.Assert(b, e == nil, "TestDay5Part2 falied with error: %v", e)
-		c.reset()
+		c.Reset()
 	}
 }
 
