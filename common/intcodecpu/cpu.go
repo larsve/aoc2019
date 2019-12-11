@@ -6,57 +6,121 @@ import (
 
 // CPU provieds the basic contents od the CPU/interpreter where a program is executed.
 type CPU struct {
-	program []int  // Original program
-	memory  []int  // Running program
-	pc      uint   // Program Counter
-	stdIn   StdIn  // Standard input function
-	stdOut  StdOut // Standard output function
+	program     []int        // Original program
+	memory      []int        // Running program
+	pc          uint         // Program Counter
+	stdIn       StdIn        // Standard input function
+	stdOut      StdOut       // Standard output function
+	relBase     int          // Relative base offset for mode 2 OpCode parameters
+	data        map[int]int  // Used when program is using addresses outside it's own program space (assumes no code will be executed from here)
+	DebugOutput func(string) // Set to a function to receive debugging output from CPU processing
 }
 
-func (c *CPU) lda(addr int) int {
-	return c.memory[addr]
+func (c *CPU) debug(message string) {
+	if c.DebugOutput == nil {
+		return
+	}
+	c.DebugOutput(message)
 }
 
-func (c *CPU) sta(addr, value int) {
-	c.memory[addr] = value
+func (c *CPU) debugf(format string, v ...interface{}) {
+	if c.DebugOutput == nil {
+		return
+	}
+	c.DebugOutput(fmt.Sprintf(format, v...))
+}
+
+func (c *CPU) getOpCode() opCode {
+	o := opCode(c.memory[c.pc] % 100)
+	if _, ok := opCodeStrings[o]; ok {
+		return o
+	}
+	return opERR
+}
+
+func (c *CPU) getOpParams(opLen uint) (p1Mode, p1Reg, p2Mode, p2Reg, p3Mode, p3Reg int) {
+	p := c.memory[c.pc : c.pc+opLen]
+	p1Mode = p[0] / 100 % 10
+	p2Mode = p[0] / 1000 % 10
+	p3Mode = p[0] / 10000 % 10
+	pSize := len(p)
+	if pSize > 1 {
+		p1Reg = p[1]
+	}
+	if pSize > 2 {
+		p2Reg = p[2]
+	}
+	if pSize > 3 {
+		p3Reg = p[3]
+	}
+	return
+}
+
+func (c *CPU) lda(addr int, mode int) int {
+	switch mode {
+	case 1:
+		return addr
+	case 2:
+		addr += c.relBase
+	}
+
+	if addr < len(c.memory) {
+		return c.memory[addr]
+	}
+	if v, ok := c.data[addr]; ok {
+		return v
+	}
+	c.debug("<?>")
+	return 0
+}
+
+func (c *CPU) sta(addr, value, mode int) {
+	if mode == 2 {
+		addr += c.relBase
+	}
+	if addr < len(c.memory) {
+		c.memory[addr] = value
+		c.debugf(" = %v => %v\n", value, addr)
+	} else {
+		c.data[addr] = value
+		c.debugf(" = %v => %v[*]\n", value, addr)
+	}
+}
+
+// DumpMemory return a dump of the active memory, starting from the start address
+func (c *CPU) DumpMemory(startAddress, length int) (dump []int) {
+	dump = make([]int, length)
+	for i := range dump {
+		dump[i] = c.lda(startAddress+i, 0)
+	}
+	return
+}
+
+// PatchMemory is used to change the memory, the patched memory is reverted when Reset() is called
+func (c *CPU) PatchMemory(startAddress int, patchData []int) {
+	for i, d := range patchData {
+		c.sta(startAddress+i, d, 0)
+	}
 }
 
 // Reset will reset both program and pc to it's original states
 func (c *CPU) Reset() {
 	copy(c.memory, c.program)
 	c.pc = 0
+	c.relBase = 0
+	c.data = make(map[int]int)
 }
 
 // Run start the program
-func (c *CPU) Run() (result int, err error) {
+func (c *CPU) Run() (err error) {
+	c.debug("--program run--\n")
 	done := false
-	result = 0
 	for !done {
 		if done, err = c.executeOpCode(); err != nil {
+			c.debug("--program fault--\n")
 			return
 		}
 	}
-	return c.memory[0], nil
-}
-
-// SetAlarmCode will set the 2 first parameter of the first operand in the program
-func (c *CPU) SetAlarmCode(code int) {
-	c.memory[1] = code / 100
-	c.memory[2] = code % 100
-}
-
-// GetNounAndVerbFor return the "Noun" and "Verb" (Alarm code) for a specified program output
-func (c *CPU) GetNounAndVerbFor(output int) int {
-	for i := 0; i <= 9999; i++ {
-		c.Reset()
-		c.SetAlarmCode(i)
-		r, e := c.Run()
-		if e != nil {
-			fmt.Printf("Alarm Code %v broke interpreter (%v), oh well, checking next..\n", i, e)
-		}
-		if r == output {
-			return i
-		}
-	}
-	return -1
+	c.debug("--program end--\n")
+	return
 }

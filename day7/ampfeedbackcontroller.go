@@ -31,7 +31,7 @@ func (a *ampFeedbackController) calcThrusterSignal(phaseSetting int) int {
 		go func(ampNo int) {
 			defer wg.Done()
 			a.cpu[ampNo].Reset()
-			if _, err := a.cpu[ampNo].Run(); err != nil {
+			if err := a.cpu[ampNo].Run(); err != nil {
 				fmt.Printf("AMP#%v abotred due to %v", ampNo, err)
 			}
 		}(i)

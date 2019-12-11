@@ -36,7 +36,7 @@ func (a *ampSimpleController) calcThrusterSignal(phaseSetting int) int {
 	for a.ampIteration = 0; a.ampIteration < 5; a.ampIteration++ {
 		a.inputCnt = 0
 		a.cpu.Reset()
-		if _, err := a.cpu.Run(); err != nil {
+		if err := a.cpu.Run(); err != nil {
 			fmt.Printf("Amp iteration %v aborted du to %v\n", a.ampIteration, err)
 			return -1
 		}
