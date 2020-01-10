@@ -1,3 +1,5 @@
 .scannerwork/*
+build/*
 *.exe
+*.sh
 **/*.png
