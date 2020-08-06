@@ -7,6 +7,10 @@ type (
 		moons     []*moon
 		stepCount int
 	}
+	state struct {
+		pos int
+		vel int
+	}
 )
 
 func (s *simulation) addMoon(name string, x, y, z int) {
@@ -30,25 +34,16 @@ func (s *simulation) applyVelocity() {
 	}
 }
 
-func (s *simulation) currentState() int {
-	state := 0
+func (s *simulation) currentState() (x, y, z [4]state) {
 	for i, m := range s.moons {
-		state *= i
-		state += m.energy()
-		state *= 100
-		state += m.pos.x
-		state *= 100
-		state += m.pos.y
-		state *= 100
-		state += m.pos.z
-		state *= 100
-		state += m.vel.x
-		state *= 100
-		state += m.vel.y
-		state *= 100
-		state += m.vel.z
+		x[i].pos = m.pos.x
+		x[i].vel = m.vel.x
+		y[i].pos = m.pos.y
+		y[i].vel = m.vel.y
+		z[i].pos = m.pos.z
+		z[i].vel = m.vel.z
 	}
-	return state
+	return
 }
 
 func (s *simulation) energy() int {
@@ -60,16 +55,51 @@ func (s *simulation) energy() int {
 }
 
 func (s *simulation) loop() int {
-	states := map[int]int{}
-	states[s.currentState()] = 0
+	xStates := map[[4]state]int{}
+	yStates := map[[4]state]int{}
+	zStates := map[[4]state]int{}
+	xs, ys, zs := s.currentState()
+	i := 0
 	for {
+		// Save current states
+		xStates[xs] = i
+		yStates[ys] = i
+		zStates[zs] = i
+
+		// Step
 		s.step()
-		state := s.currentState()
-		if i, ok := states[state]; ok {
-			return s.stepCount - i
+		i++
+		xs, ys, zs = s.currentState()
+
+		// Check if current states have been hit before
+		xi, xok := xStates[xs]
+		yi, yok := yStates[ys]
+		zi, zok := zStates[zs]
+		if xok && yok && zok {
+			return lcm(i-xi, i-yi, i-zi)
 		}
-		states[state] = s.stepCount
 	}
+}
+
+// find Least Common Multiple (LCM) via GCD
+func lcm(a, b int, integers ...int) int {
+	result := a * b / gcd(a, b)
+
+	for i := 0; i < len(integers); i++ {
+		result = lcm(result, integers[i])
+	}
+
+	return result
+}
+
+// greatest common divisor (GCD) via Euclidean algorithm
+func gcd(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
 }
 
 func (s *simulation) step() {
@@ -95,13 +125,13 @@ func part1() *simulation {
 	return sim
 }
 
-func part2() *simulation {
+func part2() (*simulation, int) {
 	sim := &simulation{}
 	sim.addMoon("Io", 3, 2, -6)
 	sim.addMoon("Europa", -13, 18, 10)
 	sim.addMoon("Ganymede", -8, -1, 13)
 	sim.addMoon("Callisto", 5, 10, 4)
 	steps := sim.loop()
-	fmt.Printf("Part 2 total steps: %v (steps between repeating patterns: %v)\n", sim.stepCount, steps)
-	return sim
+	fmt.Printf("Part 2 total steps: %v (simulation steps: %v)\n", steps, sim.stepCount)
+	return sim, steps
 }
