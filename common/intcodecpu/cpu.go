@@ -13,6 +13,7 @@ type CPU struct {
 	stdOut      StdOut       // Standard output function
 	relBase     int          // Relative base offset for mode 2 OpCode parameters
 	data        map[int]int  // Used when program is using addresses outside it's own program space (assumes no code will be executed from here)
+	haltProgram bool         // Is set to true when CPU should abort the running program
 	DebugOutput func(string) // Set to a function to receive debugging output from CPU processing
 }
 
@@ -96,6 +97,11 @@ func (c *CPU) DumpMemory(startAddress, length int) (dump []int) {
 	return
 }
 
+// Halt is called to stop the running program
+func (c *CPU) Halt() {
+	c.haltProgram = true
+}
+
 // PatchMemory is used to change the memory, the patched memory is reverted when Reset() is called
 func (c *CPU) PatchMemory(startAddress int, patchData []int) {
 	for i, d := range patchData {
@@ -114,11 +120,15 @@ func (c *CPU) Reset() {
 // Run start the program
 func (c *CPU) Run() (err error) {
 	c.debug("--program run--\n")
+	c.haltProgram = false
 	done := false
 	for !done {
 		if done, err = c.executeOpCode(); err != nil {
 			c.debug("--program fault--\n")
 			return
+		}
+		if c.haltProgram {
+			done = true
 		}
 	}
 	c.debug("--program end--\n")
